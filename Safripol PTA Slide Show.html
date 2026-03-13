@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Logistics - Operations Presentation</title>
+  
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --logic-navy: #1c2545;
+            --intl-orange: #e04403;
+            --white: #ffffff;
+            --grey: #f4f4f4;
+            --text-grey: #a0aabf;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--grey);
+            overflow: hidden;
+        }
+
+        /* --- UI & BRANDING --- */
+        .header-bar {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 80px;
+            background-color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-sizing: border-box;
+            z-index: 100;
+            border-bottom: 4px solid var(--logic-navy);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-logos {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .header-bar img.main-logo { height: 50px; }
+        .header-bar img.client-header-logo { height: 48px; }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .export-btn {
+            background-color: var(--intl-orange);
+            color: var(--white);
+            border: none;
+            padding: 10px 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .export-btn:hover {
+            background-color: var(--logic-navy);
+            transform: translateY(-1px);
+        }
+        .export-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* --- SLIDER LAYOUT + NEW 1/4 WATERMARK --- */
+        .swiper {
+            width: 100%;
+            height: calc(100% - 80px);
+            margin-top: 80px;
+            background-color: var(--logic-navy);
+            overflow: hidden;
+        }
+        .swiper-slide {
+            width: 100% !important;
+            height: 100% !important;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 40px 100px;
+            box-sizing: border-box;
+            gap: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        .watermark {
+            position: absolute;
+            top: 75%;
+            right: -15%;                /* ONLY 1/4 of the logo visible – covers right 1/4 of screen background */
+            transform: translateY(-50%);
+            height: 97vh;               /* Large enough to feel like a full background logo */
+            opacity: 0.06;              /* Very transparent */
+            z-index: 1;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+        .image-container {
+            flex: 2;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 78vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+        .image-container img:hover {
+            transform: scale(1.02);
+        }
+        .text-container {
+            flex: 1;
+            color: var(--white);
+            padding: 20px 0;
+            z-index: 2;
+        }
+        .slide-header {
+            font-size: 2.5rem;
+            color: var(--white);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--intl-orange);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+        .slide-text {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: var(--text-grey);
+        }
+        .slide-text strong {
+            color: var(--intl-orange);
+            font-weight: 700;
+        }
+
+        /* Swiper Navigation & Pagination */
+        .swiper-button-next, .swiper-button-prev {
+            color: var(--intl-orange) !important;
+        }
+        .swiper-pagination-bullet {
+            background: var(--white) !important;
+        }
+        .swiper-pagination-bullet-active {
+            background: var(--intl-orange) !important;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--logic-navy);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: opacity 0.5s ease;
+        }
+
+        /* IMAGE MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            position: relative;
+            max-width: 95%;
+            max-height: 95vh;
+            padding: 20px;
+            text-align: center;
+        }
+        .modal-content img {
+            max-width: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            cursor: zoom-out;
+        }
+        .close {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            background: var(--intl-orange);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 2001;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .close:hover {
+            background: #c03402;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="loader">Loading Presentation Assets...</div>
+
+    <div class="header-bar">
+        <div class="header-logos">
+            <img src="https://i.ibb.co/zVWzCQ9q/Connect-Logistics-Logo.png" alt="Connect Logistics Logo" class="main-logo">
+            <img src="https://i.ibb.co/Q3rQGdrN/Safripol-Logo-2022-1024x293.png" alt="Safripol" class="client-header-logo">
+        </div>
+        <div class="header-controls">
+            <h3 style="margin:0; color: var(--logic-navy);">Operational Capacity</h3>
+            <button class="export-btn" id="exportBtn" onclick="generatePDF()" disabled>Preparing PDF...</button>
+        </div>
+    </div>
+
+    <div class="swiper mySwiper">
+        <div class="swiper-wrapper" id="slideContainer"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
+    </div>
+
+    <!-- IMAGE MODAL -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span class="close">✕ CLOSE IMAGE</span>
+            <img id="modalImage" src="" alt="Enlarged Slide Image">
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        // --- 1. SLIDE DATA ---
+        const presentationData = [
+            { title: "Under-Roof Capacity", text: "We currently have <strong>17,000 PTA Bulk bags</strong> stored safely under roof, equating to <strong>20,400 MT</strong>.", imageUrl: "https://i.ibb.co/mrWngT3Y/Picture1.png" },
+            { title: "Storage Integrity", text: "The <strong>20,400 MT of PTA </strong> is perfectly arranged for scalable operations, rapid access, and complete protection from the elements.", imageUrl: "https://i.ibb.co/Pz9XCTXR/Picture2.png" },
+            { title: "Workflow Efficiency", text: "Pristine organization ensures our fleet and ground teams operate without bottlenecks.", imageUrl: "https://i.ibb.co/mVhWWH89/Picture3.png" },
+            { title: "Dispatch Readiness", text: "A clear view of the 17,000 bags ready for immediate logistical deployment.", imageUrl: "https://i.ibb.co/hRmJV8FR/Picture4.png" },
+            { title: "Aisle Management", text: "Maximum capacity utilization while strictly maintaining safety and accessibility standards.", imageUrl: "https://i.ibb.co/cSn9ff8m/Picture5.png" },
+            { title: "Yard Operations", text: "Total Container Yard Capacity: <strong>Over 80 Slots for 40ft Containers</strong>.", imageUrl: "https://i.ibb.co/j91XkLJg/Picture6.png" },
+            { title: "ISO Tainers", text: "We currently have <strong>5 ISO Tainers</strong> in active circulation, perfectly maintained for client requirements.", imageUrl: "https://i.ibb.co/Z67FKgTM/ISO-TAINER-2.jpg" },
+            { title: "Specialized Decanting", text: "Our dedicated handling equipment ensures rapid, safe, and clean decanting operations.", imageUrl: "https://i.ibb.co/LBsyd03/handling-equipment.jpg" },
+            { title: "Combilift Fleet", text: "We have <strong>2 Combilifts in operation</strong>. This provides crucial redundancy should we face a breakdown, or allows us to run two simultaneously during peak periods.", imageUrl: "https://i.ibb.co/BVdSz8vC/COMBILIFT-1.jpg" }
+        ];
+
+        // --- 2. GLOBAL ASSETS FOR PDF ---
+        const preloadedAssets = {};
+        const toDataURL = url => fetch(url)
+            .then(r => r.blob())
+            .then(b => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(b);
+            }))
+            .catch(() => null);
+
+        // --- 3. IMAGE MODAL FUNCTIONS ---
+        function showImage(src) {
+            const modal = document.getElementById("imageModal");
+            const modalImg = document.getElementById("modalImage");
+            modalImg.src = src;
+            modal.style.display = "flex";
+        }
+        function closeModal() {
+            document.getElementById("imageModal").style.display = "none";
+        }
+
+        // --- 4. INITIALIZATION ---
+        document.addEventListener("DOMContentLoaded", async () => {
+            const container = document.getElementById("slideContainer");
+            presentationData.forEach(slide => {
+                container.innerHTML += `
+                    <div class="swiper-slide">
+                        <!-- GRAY WATERMARK – transparent background logo covering 1/4 of screen, cut off on right -->
+                        <img src="https://i.ibb.co/vS9htzt/Connect-Logistics-Icon-Gray.png" class="watermark" alt="">
+                        
+                        <div class="image-container">
+                            <img src="${slide.imageUrl}" alt="${slide.title}">
+                        </div>
+                        <div class="text-container">
+                            <h2 class="slide-header">${slide.title}</h2>
+                            <p class="slide-text">${slide.text}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Swiper with clean slide transition
+            new Swiper(".mySwiper", {
+                effect: "slide",
+                speed: 800,
+                slidesPerView: 1,
+                spaceBetween: 0,
+                navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+                pagination: { el: ".swiper-pagination", clickable: true },
+                keyboard: { enabled: true },
+                loop: false
+            });
+
+            // Preload assets
+            preloadedAssets.mainLogo = await toDataURL('https://i.ibb.co/zVWzCQ9q/Connect-Logistics-Logo.png');
+            preloadedAssets.iconLogo = await toDataURL('https://i.ibb.co/3mHc9nqh/Connect-Logistics-Icon.png');
+            preloadedAssets.safripol = await toDataURL('https://i.ibb.co/Q3rQGdrN/Safripol-Logo-2022-1024x293.png');
+
+            for (let i = 0; i < presentationData.length; i++) {
+                const url = presentationData[i].imageUrl;
+                presentationData[i].base64 = await toDataURL(url);
+                const ext = url.toLowerCase().split('.').pop();
+                presentationData[i].format = (ext === 'jpg' || ext === 'jpeg') ? 'JPEG' : 'PNG';
+            }
+
+            // Remove loader & enable export
+            const loader = document.getElementById("loader");
+            loader.style.opacity = "0";
+            setTimeout(() => loader.remove(), 500);
+
+            const btn = document.getElementById("exportBtn");
+            btn.disabled = false;
+            btn.innerText = "Export to PDF";
+
+            // Click to enlarge images
+            document.querySelectorAll('.image-container img').forEach(img => {
+                img.addEventListener('click', () => showImage(img.src));
+            });
+
+            // Modal close listeners
+            const modal = document.getElementById("imageModal");
+            modal.querySelector('.close').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeModal(); });
+        });
+
+        // --- 5. PDF GENERATOR (unchanged) ---
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+            const brandNavy = [28, 37, 69];
+            const brandOrange = [224, 68, 3];
+
+            presentationData.forEach((slide, index) => {
+                if (index > 0) doc.addPage();
+                doc.setFillColor(255, 255, 255);
+                doc.rect(0, 0, 842, 70, 'F');
+                doc.setFillColor(...brandNavy);
+                doc.rect(0, 70, 842, 4, 'F');
+
+                if (preloadedAssets.mainLogo) doc.addImage(preloadedAssets.mainLogo, 'PNG', 40, 15, 130, 40);
+                doc.setTextColor(...brandNavy);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(22);
+                doc.text(slide.title.toUpperCase(), 800, 45, { align: "right" });
+
+                doc.setFillColor(244, 244, 244);
+                doc.rect(0, 74, 842, 521, 'F');
+
+                if (preloadedAssets.iconLogo) {
+                    doc.setGState(new doc.GState({opacity: 0.05}));
+                    doc.addImage(preloadedAssets.iconLogo, 'PNG', 270, 150, 300, 300);
+                    doc.setGState(new doc.GState({opacity: 1}));
+                }
+
+                if (slide.base64) {
+                    doc.setDrawColor(200, 200, 200);
+                    doc.rect(39, 99, 482, 362);
+                    doc.addImage(slide.base64, slide.format, 40, 100, 480, 360);
+                }
+
+                doc.setFillColor(255, 255, 255);
+                doc.rect(550, 100, 250, 360, 'F');
+                doc.setFillColor(...brandOrange);
+                doc.rect(550, 100, 250, 5, 'F');
+                doc.setTextColor(...brandNavy);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.text("Notes:", 570, 140);
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(12);
+                doc.setTextColor(50, 50, 50);
+                const cleanText = slide.text.replace(/<\/?[^>]+(>|$)/g, "");
+                doc.text(doc.splitTextToSize(cleanText, 210), 570, 170);
+
+                doc.setDrawColor(...brandNavy);
+                doc.line(40, 530, 800, 530);
+                if (preloadedAssets.safripol) doc.addImage(preloadedAssets.safripol, 'PNG', 670, 545, 130, 37);
+
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text("Connect Supply Chain Services (Pty) Ltd t/a Connect Logistics", 40, 555);
+                doc.text(`Page ${index + 1} of ${presentationData.length}`, 421, 555, { align: "center" });
+            });
+            doc.save("Connect_Logistics_Operations.pdf");
+        }
+    </script>
+</body>
+</html>
